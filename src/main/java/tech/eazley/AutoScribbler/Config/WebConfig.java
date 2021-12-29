@@ -10,7 +10,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**").allowedOrigins("http://localhost:4200");
+        String localhost = "http://localhost:4200";
+        String prod = "https://auto-scribbler-app.herokuapp.com";
+        registry.addMapping("/**").allowedOrigins(prod);
        // WebMvcConfigurer.super.addCorsMappings(registry);
     }
 }
