@@ -1,18 +1,13 @@
 package tech.eazley.AutoScribbler.Controllers;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.util.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import tech.eazley.AutoScribbler.Models.HttpModels.ScribbleRequestBody;
 import tech.eazley.AutoScribbler.Services.ScribblerService;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -30,8 +25,10 @@ public class ScribblerController {
     }
 
     @PostMapping("/")
-    public byte[] Scribble(@RequestBody HashMap<String,Object> submittedFiles, HttpServletResponse response) throws IOException, InvalidFormatException {
-        ArrayList<String> files = (ArrayList<String>) submittedFiles.get("files");
+    public byte[] Scribble(@RequestBody ScribbleRequestBody requestBody, HttpServletResponse response) throws IOException, InvalidFormatException {
+        ArrayList<String> files = requestBody.getFiles();
+        ArrayList<ScribbleRequestBody.TemplateDefinitionRequestBody> templateDefinitions = requestBody.getTemplateDefinitions();
+
         ArrayList<byte[]> data = new ArrayList<>();
 
         for (String base64String: files)
@@ -42,28 +39,31 @@ public class ScribblerController {
         }
 
         try {
-            byte[] newData = scribblerService.replace("<name>","Colin Campbell",new ByteArrayInputStream(data.get(0)));
+
+            for (ScribbleRequestBody.TemplateDefinitionRequestBody templateDefinition: templateDefinitions)
+            {
+                for (int i = 0; i < data.size(); i ++)
+                {
+                    byte[] newData = scribblerService.replace(templateDefinition.getItemName(),templateDefinition.getValue(),new ByteArrayInputStream(data.get(i)));
+                    //data.remove(i);
+                    data.set(i,newData);
+                }
+            }
+
+            //byte[] newData = scribblerService.replace("<name>","Colin Campbell",new ByteArrayInputStream(data.get(0)));
             Map<String,byte[]> mapReporte = new HashMap<>();
 
-            mapReporte.put("File",newData);
+            int pos = 0;
+            for (byte[] file : data)
+            {
+                mapReporte.put(requestBody.getFileNames().get(pos),file);
+                pos++;
+            }
 
-            // get your file as InputStream
-            //InputStream is = new ByteArrayInputStream(newData);
-
-
-
-            //zipOutputStream.close();
-            //zipOutputStream.finish();
-            //zipOutputStream.flush();
-
-            // copy it to response's OutputStream
-
-            response.setHeader("Content-Disposition", "attachment; filename=demo.zip");
+            Date date = new Date();
+            String fileName = "AutoScribbler-"+ date.getTime()+".zip";
+            response.setHeader("Content-Disposition", "attachment; filename="+fileName);
             response.setContentType("application/zip");
-            //IOUtils.copy(new ByteArrayInputStream(zipData),response.getOutputStream());
-            //org.apache.commons.io.IOUtils.copy(is, response.getOutputStream());
-
-            //response.flushBuffer();
 
             return listBytesToZip(mapReporte);
         } catch (IOException ex) {
