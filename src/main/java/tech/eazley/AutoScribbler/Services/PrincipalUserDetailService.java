@@ -5,8 +5,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import tech.eazley.AutoScribbler.Models.HttpModels.Database.PrincipalUserDetails;
-import tech.eazley.AutoScribbler.Models.HttpModels.Database.User;
+import tech.eazley.AutoScribbler.Models.Database.PrincipalUserDetails;
+import tech.eazley.AutoScribbler.Models.Database.User;
 
 @Service
 public class PrincipalUserDetailService implements UserDetailsService {

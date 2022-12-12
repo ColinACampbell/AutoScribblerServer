@@ -15,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import tech.eazley.AutoScribbler.Filters.JWTFilter;
 import tech.eazley.AutoScribbler.Services.PrincipalUserDetailService;
 
 import javax.sql.DataSource;
@@ -23,6 +25,10 @@ import javax.sql.DataSource;
 public class WebSecurityConfig {
     @Autowired
     PrincipalUserDetailService appUserDetailService;
+
+    @Autowired
+    JWTFilter jwtFilter;
+
     AuthenticationManager authenticationManager;
 
     @Bean
@@ -32,11 +38,11 @@ public class WebSecurityConfig {
             authBuilder.userDetailsService(appUserDetailService).passwordEncoder(passwordEncoder());
             authenticationManager = authBuilder.build();
 
-            httpSecurity.csrf().disable().cors().disable().authorizeHttpRequests().antMatchers("/api/users/auth").permitAll()
+            httpSecurity.csrf().disable().cors().disable().authorizeHttpRequests().antMatchers("/api/users/","/api/users/auth").permitAll()
                     .anyRequest().authenticated()
                     .and()
                     .authenticationManager(authenticationManager)
-                    .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+                    .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
             return httpSecurity.build();
     }
 
